@@ -9,11 +9,11 @@
 
 ## Gallery
 
-<p align="center">
-  <img src="final/pic/sc-1.png" width="32%" alt="State 1" />
-  <img src="final/pic/sc-2.png" width="32%" alt="State 2" />
-  <img src="final/pic/sc-3.png" width="32%" alt="State 3" />
-</p>
+![State 1](final/pic/sr-1.png)
+
+![State 2](final/pic/sr-2.png)
+
+![State 3](final/pic/sr-3.png)
 
 ---
 
