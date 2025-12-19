@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Threshold</title>
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background: #111;
+            font-family: 'Inter', sans-serif;
+        }
+
+        /* OVERLAY PREMIUM STYLES (WHITE THEME) */
+        #overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100vh;
+            background: #fff;
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            transition: opacity 1.5s ease-in-out;
+            /* Slower fade for drama */
+        }
+
+        #overlay h1 {
+            font-weight: 300;
+            font-size: 1.2rem;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            margin-bottom: 0.8rem;
+            color: #111;
+        }
+
+        #overlay p {
+            color: #999;
+            font-size: 0.75rem;
+            letter-spacing: 0.1em;
+            line-height: 1.6;
+            margin-bottom: 3rem;
+            text-transform: uppercase;
+            max-width: 450px;
+            text-align: center;
+        }
+
+        #start-btn {
+            background: transparent;
+            border: none;
+            color: #111;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.7rem;
+            letter-spacing: 0.2em;
+            border-bottom: 1px solid transparent;
+            cursor: pointer;
+            transition: all 0.3s;
+            padding-bottom: 5px;
+            text-transform: uppercase;
+        }
+
+        #start-btn:hover {
+            border-bottom: 1px solid #111;
+            opacity: 0.6;
+        }
+
+        #info {
+            position: absolute;
+            top: 2rem;
+            left: 2rem;
+            pointer-events: none;
+            color: #aaa;
+            z-index: 10;
+            mix-blend-mode: exclusion;
+        }
+
+        #info h1 {
+            font-family: 'Inter', sans-serif;
+            font-weight: normal;
+            font-size: 1rem;
+            letter-spacing: 0.13em;
+            margin: 0;
+            text-transform: uppercase;
+        }
+
+        #info p {
+            font-family: 'Inter', sans-serif;
+            font-size: 0.8rem;
+            letter-spacing: 0.05em;
+            margin-top: 5px;
+            opacity: 0.7;
+        }
+
+        #control-hint {
+            position: absolute;
+            bottom: 2rem;
+            width: 100%;
+            text-align: center;
+            font-size: 0.7rem;
+            color: #666;
+            letter-spacing: 0.1em;
+            pointer-events: none;
+            transition: opacity 0.5s;
+            font-family: 'Inter', sans-serif;
+        }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.6.0/p5.js"></script>
+</head>
+
+<body>
+    <!-- OVERLAY -->
+    <div id="overlay">
+        <h1>Threshold</h1>
+        <p>An investigation into stability. Determining the precise distance where chaos organizes into order. The
+            viewer must find the delicate balance between too close and too far.</p>
+        <button id="start-btn">ENTER</button>
+    </div>
+
+    <!-- START LOGIC -->
+    <script>
+        window.addEventListener('load', () => {
+            document.fonts.ready.then(() => {
+                setTimeout(() => document.body.classList.add('loaded'), 100);
+            });
+
+            document.getElementById('start-btn').addEventListener('click', () => {
+                document.getElementById('overlay').style.opacity = 0;
+                setTimeout(() => document.getElementById('overlay').style.display = 'none', 2000);
+            });
+        });
+    </script>
+
+    <div id="info">
+        <h1>Threshold</h1>
+        <p>Stability requires a specific distance.</p>
+    </div>
+
+    <div id="control-hint">find the sweet spot</div>
+
+    <script>
+        let particles = [];
+        let numParticles = 400;
+        let sweetSpotMin = 150;
+        let sweetSpotMax = 300;
+        let isStable = false;
+
+        function setup() {
+            createCanvas(windowWidth, windowHeight);
+
+            // Initialize particles
+            let cols = 20;
+            let rows = 20;
+            let spacing = min(width, height) * 0.4 / cols * 2; // Dynamic spacing
+            let startX = width / 2 - (cols * spacing) / 2 + spacing / 2;
+            let startY = height / 2 - (rows * spacing) / 2 + spacing / 2;
+
+            for (let i = 0; i < numParticles; i++) {
+                // Calculate grid target positions
+                let c = i % cols;
+                let r = floor(i / cols);
+                let tx = startX + c * spacing;
+                let ty = startY + r * spacing;
+                particles.push(new Particle(tx, ty));
+            }
+        }
+
+        function draw() {
+            background(17); // Dark background for contrast with Study 01
+
+            // Calculate distance from center to mouse
+            let centerDist = dist(mouseX, mouseY, width / 2, height / 2);
+
+            // Visualize the "Sweet Spot" guide (subtle)
+            noFill();
+            strokeWeight(1);
+
+            // Check if we are in the sweet spot
+            if (centerDist > sweetSpotMin && centerDist < sweetSpotMax) {
+                isStable = true;
+                stroke(50, 255, 100, 50); // Subtle green hint
+                document.getElementById('control-hint').style.opacity = 0;
+            } else {
+                isStable = false;
+                stroke(255, 50, 50, 30); // Subtle red hint
+                document.getElementById('control-hint').style.opacity = 1;
+            }
+
+            // Draw the threshold ring guide
+            ellipse(width / 2, height / 2, sweetSpotMin * 2);
+            ellipse(width / 2, height / 2, sweetSpotMax * 2);
+
+            // Update particles
+            for (let p of particles) {
+                p.update(isStable);
+                p.display(isStable);
+            }
+        }
+
+        function windowResized() {
+            resizeCanvas(windowWidth, windowHeight);
+            // Re-init positions to stay centered
+            particles = [];
+            setup();
+        }
+
+        class Particle {
+            constructor(targetX, targetY) {
+                this.targetX = targetX;
+                this.targetY = targetY;
+
+                // Start somewhere random
+                this.x = random(width);
+                this.y = random(height);
+
+                // Random velocity for chaos mode
+                this.vel = p5.Vector.random2D().mult(random(2, 5));
+
+                this.size = random(2, 4);
+            }
+
+            update(stable) {
+                if (stable) {
+                    // ORDER MODE: Lerp to target grid position
+                    // We use an exponential easing for that "snap" effect
+                    this.x = lerp(this.x, this.targetX, 0.1);
+                    this.y = lerp(this.y, this.targetY, 0.1);
+                } else {
+                    // CHAOS MODE: Move randomly
+                    this.x += this.vel.x;
+                    this.y += this.vel.y;
+
+                    // Bounce off edges
+                    if (this.x < 0 || this.x > width) this.vel.x *= -1;
+                    if (this.y < 0 || this.y > height) this.vel.y *= -1;
+
+                    // Add a little noise to velocity so it's not just straight lines
+                    this.vel.rotate(random(-0.1, 0.1));
+                }
+            }
+
+            display(stable) {
+                noStroke();
+                if (stable) {
+                    fill(255); // Pure white when stable
+                    rectMode(CENTER);
+                    // Transform to squares when stable (Order)
+                    rect(this.x, this.y, this.size, this.size);
+                } else {
+                    fill(255, 100); // Ghostly when chaotic
+                    ellipse(this.x, this.y, this.size, this.size);
+                }
+            }
+        }
+    </script>
+</body>
+
+</html>

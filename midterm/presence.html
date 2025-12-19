@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Presence</title>
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background: #000;
+            font-family: 'Inter', sans-serif;
+        }
+
+        /* OVERLAY PREMIUM STYLES (WHITE THEME) */
+        #overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100vh;
+            background: #fff;
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            transition: opacity 1.5s ease-in-out;
+            /* Slower fade for drama */
+        }
+
+        #overlay h1 {
+            font-weight: 300;
+            font-size: 1.2rem;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            margin-bottom: 0.8rem;
+            color: #111;
+        }
+
+        #overlay p {
+            color: #999;
+            font-size: 0.75rem;
+            letter-spacing: 0.1em;
+            line-height: 1.6;
+            margin-bottom: 3rem;
+            text-transform: uppercase;
+            max-width: 450px;
+            text-align: center;
+        }
+
+        #start-btn {
+            background: transparent;
+            border: none;
+            color: #111;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.7rem;
+            letter-spacing: 0.2em;
+            border-bottom: 1px solid transparent;
+            cursor: pointer;
+            transition: all 0.3s;
+            padding-bottom: 5px;
+            text-transform: uppercase;
+        }
+
+        #start-btn:hover {
+            border-bottom: 1px solid #111;
+            opacity: 0.6;
+        }
+
+        #info {
+            position: absolute;
+            top: 2rem;
+            left: 2rem;
+            pointer-events: none;
+            color: #fff;
+            z-index: 10;
+            mix-blend-mode: difference;
+        }
+
+        #info h1 {
+            font-family: 'Inter', sans-serif;
+            font-weight: normal;
+            font-size: 1rem;
+            letter-spacing: 0.25em;
+            margin: 0;
+            text-transform: uppercase;
+        }
+
+        #info p {
+            font-family: 'Inter', sans-serif;
+            font-size: 0.8rem;
+            letter-spacing: 0.05em;
+            margin-top: 5px;
+            opacity: 0.6;
+        }
+
+        #control-hint {
+            position: absolute;
+            bottom: 2rem;
+            width: 100%;
+            text-align: center;
+            font-size: 0.7rem;
+            color: #444;
+            pointer-events: none;
+            letter-spacing: 0.1em;
+            font-family: 'Inter', sans-serif;
+        }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.6.0/p5.js"></script>
+</head>
+
+<body>
+    <!-- OVERLAY -->
+    <div id="overlay">
+        <h1>Presence</h1>
+        <p>A meditation on existence and motion. In the void, only movement creates form. When the observer becomes
+            still, the evidence of presence fades back into nothingness.</p>
+        <button id="start-btn">ENTER</button>
+    </div>
+
+    <!-- START LOGIC -->
+    <script>
+        window.addEventListener('load', () => {
+            document.fonts.ready.then(() => {
+                setTimeout(() => document.body.classList.add('loaded'), 100);
+            });
+
+            document.getElementById('start-btn').addEventListener('click', () => {
+                document.getElementById('overlay').style.opacity = 0;
+                setTimeout(() => document.getElementById('overlay').style.display = 'none', 2000);
+            });
+        });
+    </script>
+
+    <div id="info">
+        <h1>Presence</h1>
+        <p>To exist is to move. Stillness is a void.</p>
+    </div>
+
+    <div id="control-hint">silence returns to nothing</div>
+
+    <script>
+        let trails = [];
+        let pMouseX_smooth, pMouseY_smooth; // Smoothed positions for better spawning
+
+        function setup() {
+            createCanvas(windowWidth, windowHeight);
+            background(0);
+            pMouseX_smooth = mouseX;
+            pMouseY_smooth = mouseY;
+        }
+
+        function draw() {
+            // No background() call! We use a fading rectangle for trails
+            // This creates the "long exposure" aesthetic
+            fill(0, 20); // The 20 controls the trail length/smear
+            noStroke();
+            rect(0, 0, width, height);
+
+            // Interpolate mouse movement to fill gaps if moving fast
+            pMouseX_smooth = lerp(pMouseX_smooth, mouseX, 0.2);
+            pMouseY_smooth = lerp(pMouseY_smooth, mouseY, 0.2);
+
+            // Only spawn if moving significantly
+            let d = dist(mouseX, mouseY, pmouseX, pmouseY);
+            if (d > 1) {
+                // Spawn more particles when moving faster
+                let count = map(d, 0, 50, 1, 5);
+                for (let i = 0; i < count; i++) {
+                    trails.push(new Trace(pMouseX_smooth, pMouseY_smooth));
+                }
+            }
+
+            // Update and display particles
+            for (let i = trails.length - 1; i >= 0; i--) {
+                let t = trails[i];
+                t.update();
+                t.display();
+                if (t.isDead()) {
+                    trails.splice(i, 1);
+                }
+            }
+        }
+
+        function windowResized() {
+            resizeCanvas(windowWidth, windowHeight);
+            background(0);
+        }
+
+        class Trace {
+            constructor(x, y) {
+                this.pos = createVector(x, y);
+                // Random drift velocity
+                this.vel = p5.Vector.random2D().mult(random(0.5, 2));
+                // Add initial momentum from mouse
+                let mouseVel = createVector(mouseX - pmouseX, mouseY - pmouseY).mult(0.1);
+                this.vel.add(mouseVel);
+
+                this.life = 255;
+                this.decay = random(2, 5); // Random decay rates for variety
+                this.size = random(2, 6);
+            }
+
+            update() {
+                this.pos.add(this.vel);
+                this.life -= this.decay;
+
+                // Entropy: Velocity slows down but creates curls (simulated smoke)
+                this.vel.mult(0.95); // Friction
+
+                // Add slight noise to position for "diffusion"
+                this.pos.x += random(-1, 1);
+                this.pos.y += random(-1, 1);
+            }
+
+            display() {
+                noStroke();
+                // Color flows from White -> Blue/Purple -> Black
+                // This adds a "bruise" or "ghost" feeling
+                let r = this.life;
+                let g = this.life * 0.8;
+                let b = this.life * 0.9 + 50;
+
+                fill(r, g, b, this.life);
+                ellipse(this.pos.x, this.pos.y, this.size);
+            }
+
+            isDead() {
+                return this.life < 0;
+            }
+        }
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Fabric</title>
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background: #fff;
+            font-family: 'Inter', sans-serif;
+        }
+
+        /* OVERLAY PREMIUM */
+        #overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100vh;
+            background: #fff;
+            z-index: 999;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            transition: opacity 0.8s ease;
+        }
+
+        #overlay h1 {
+            font-weight: 300;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            margin-bottom: 0.8rem;
+            font-size: 1.2rem;
+            color: #111;
+        }
+
+        #overlay p {
+            color: #666;
+            font-size: 0.75rem;
+            letter-spacing: 0.1em;
+            line-height: 1.6;
+            margin-bottom: 3rem;
+            text-transform: uppercase;
+            max-width: 450px;
+        }
+
+        #start-btn {
+            background: transparent;
+            border: none;
+            color: #111;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.7rem;
+            letter-spacing: 0.2em;
+            border-bottom: 1px solid transparent;
+            cursor: pointer;
+            transition: all 0.3s;
+            padding-bottom: 5px;
+            text-transform: uppercase;
+        }
+
+        #start-btn:hover {
+            border-bottom: 1px solid #111;
+            opacity: 0.6;
+        }
+
+        #loading {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            color: #000;
+            z-index: 10;
+            pointer-events: none;
+            font-size: 0.7rem;
+            letter-spacing: 0.1em;
+        }
+
+        #debug {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            color: #999;
+            font-size: 0.7rem;
+            pointer-events: none;
+            letter-spacing: 0.1em;
+        }
+
+        canvas {
+            display: block;
+        }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.6.0/p5.min.js"></script>
+    <script src="https://unpkg.com/ml5@0.12.2/dist/ml5.min.js"></script>
+</head>
+
+<body>
+    <!-- OVERLAY -->
+    <div id="overlay">
+        <h1>The Fabric</h1>
+        <p>The culmination of the research. Intimacy is visualized as a woven fabric of connections. Using hand
+            tracking, interaction creates tension and alignment, proposing that relationships are active conditions of
+            maintenance.</p>
+        <button id="start-btn">ENTER</button>
+    </div>
+
+    <div id="loading">INITIALIZING...</div>
+    <div id="debug">WAITING FOR HAND...</div>
+
+    <script>
+        // Start Logic
+        window.addEventListener('load', () => {
+            document.fonts.ready.then(() => {
+                setTimeout(() => document.body.classList.add('loaded'), 100);
+            });
+
+            document.getElementById('start-btn').addEventListener('click', () => {
+                document.getElementById('overlay').style.opacity = 0;
+                setTimeout(() => document.getElementById('overlay').style.display = 'none', 800);
+            });
+        });
+
+        // --- CONFIG ---
+        const SPACING = 35; // Grid density
+        const CONNECTION_DIST = 40; // Intimacy threshold
+
+        let nodes = [];
+        let cols, rows;
+
+        // Interaction
+        let video;
+        let handPose;
+        let hands = [];
+        let interactX = -1000, interactY = -1000;
+        let interactStrength = 0; // 0 = None, 1 = Gentle, 2 = Strong
+        let isFist = false;
+
+        function setup() {
+            createCanvas(windowWidth, windowHeight);
+
+            // 1. Setup Grid (Study 01 Logic)
+            initGrid();
+
+            // 2. Setup HandPose
+            video = createCapture(VIDEO);
+            video.size(320, 240);
+            video.hide();
+            handPose = ml5.handpose(video, () => {
+                document.getElementById('loading').style.display = 'none';
+            });
+            handPose.on('predict', results => {
+                hands = results;
+            });
+        }
+
+        function initGrid() {
+            nodes = [];
+            cols = ceil(width / SPACING);
+            rows = ceil(height / SPACING);
+            for (let i = 0; i < cols; i++) {
+                for (let j = 0; j < rows; j++) {
+                    nodes.push(new Node(i * SPACING + SPACING / 2, j * SPACING + SPACING / 2));
+                }
+            }
+        }
+
+        function draw() {
+            background(255); // Minimalist White
+
+            // --- SENSOR INPUT ---
+            let handDetected = false;
+            if (hands.length > 0) {
+                handDetected = true;
+                let hand = hands[0];
+                let palm = hand.landmarks[9];
+
+                // Map Coordinates (Mirror)
+                let hx = map(palm[0], 0, video.width, width, 0); // Mirror X
+                let hy = map(palm[1], 0, video.height, 0, height);
+                // Lerp for smooth cursor
+                interactX = lerp(interactX, hx, 0.2);
+                interactY = lerp(interactY, hy, 0.2);
+
+                // Determine Fist/Open
+                let wrist = hand.landmarks[0];
+                let tips = [4, 8, 12, 16, 20];
+                let distSum = 0;
+                tips.forEach(t => distSum += dist(wrist[0], wrist[1], hand.landmarks[t][0], hand.landmarks[t][1]));
+                let openness = distSum / 5;
+
+                // Thresholds need tuning based on cam resolution (320x240)
+                // Usable range: Fist ~20-30, Open ~60-80
+                if (openness < 35) isFist = true;
+                else isFist = false;
+
+                // Set Strength
+                if (isFist) interactStrength = lerp(interactStrength, 2.5, 0.1); // Strong Grip
+                else interactStrength = lerp(interactStrength, 1.0, 0.1); // Gentle Touch
+
+                document.getElementById('debug').innerText = isFist ? "STATE: FIST (GRIP)" : "STATE: OPEN (TOUCH)";
+            } else {
+                // Decay
+                interactStrength = lerp(interactStrength, 0, 0.05);
+                document.getElementById('debug').innerText = "NO HAND";
+            }
+
+            // Draw Hand Cursor (Subtle)
+            if (interactStrength > 0.1) {
+                noFill();
+                stroke(isFist ? 'red' : 'black');
+                strokeWeight(1);
+                ellipse(interactX, interactY, 20 * interactStrength);
+            }
+
+            // --- PHYSICS & RENDER ---
+
+            // 1. Update All
+            for (let node of nodes) {
+                node.update(interactX, interactY, interactStrength, isFist);
+            }
+
+            // 2. Draw Connections (The Fabric)
+            // Optimization: Only check neighbors to avoid O(N^2)
+            // But strict grid neighbors might be lost if particles move too much.
+            // Study 01 style: Particles stay RELATIVELY local.
+            // Let's draw connections only if strictly close.
+
+            strokeWeight(0.5);
+
+            for (let i = 0; i < nodes.length; i++) {
+                let a = nodes[i];
+
+                // Optimization: visible check
+                if (a.x < -50 || a.x > width + 50 || a.y < -50 || a.y > height + 50) continue;
+
+                // Draw Node
+                noStroke();
+                if (a.active) fill(isFist ? 255 : 0, 0, 0); // Red if fist
+                else fill(0);
+                ellipse(a.x, a.y, a.size);
+
+                // Connect to neighbors (Spatial Hashing is better but O(N^2) for 1000 is ok in JS on nice PC? Maybe)
+                // Let's try simple distance check to "close" grid neighbors only? 
+                // No, physical distance looks best.
+                // LIMIT loop to nearby indices for performance hack? No, grid sort is best.
+                // Let's just limit checks to "active" nodes near the hand.
+
+                if (a.active) {
+                    // Only connect if Active (near hand)
+                    stroke(isFist ? 'rgba(255,0,0,0.4)' : 'rgba(0,0,0,0.2)');
+                    for (let j = i + 1; j < nodes.length; j++) {
+                        let b = nodes[j];
+                        if (!b.active) continue; // Don't connect to inactive
+
+                        let dx = a.x - b.x;
+                        let dy = a.y - b.y;
+                        if (Math.abs(dx) > CONNECTION_DIST || Math.abs(dy) > CONNECTION_DIST) continue; // Fast reject
+
+                        let d = Math.sqrt(dx * dx + dy * dy);
+                        if (d < CONNECTION_DIST) {
+                            line(a.x, a.y, b.x, b.y);
+                        }
+                    }
+                }
+            }
+        }
+
+        class Node {
+            constructor(x, y) {
+                this.baseX = x;
+                this.baseY = y;
+                this.x = x;
+                this.y = y;
+                this.size = 2;
+                this.active = false; // Is being influenced?
+
+                // Perlin offsets
+                this.offX = random(1000);
+                this.offY = random(2000);
+            }
+
+            update(mx, my, strength, fistMode) {
+                // 1. Noise (Idle breathing)
+                let time = millis() * 0.001;
+                let nx = map(noise(this.offX + time), 0, 1, -5, 5);
+                let ny = map(noise(this.offY + time), 0, 1, -5, 5);
+
+                // 2. Interaction
+                let d = dist(this.x, this.y, mx, my);
+                let radius = 250;
+                if (fistMode) radius = 400; // Grip reaches further
+
+                let targetX = this.baseX + nx;
+                let targetY = this.baseY + ny;
+
+                this.active = false;
+
+                if (d < radius && strength > 0.1) {
+                    this.active = true;
+                    // Physics: ATTRACTION (Not repulsion like Study 01)
+                    // We want to pull them together to form connections
+
+                    let angle = atan2(my - this.y, mx - this.x);
+                    let force = map(d, 0, radius, 100 * strength, 0); // Pull force
+
+                    if (fistMode) {
+                        // Strong Gravity Well
+                        targetX = mx - cos(angle) * d * 0.8; // Pull VERY close
+                        targetY = my - sin(angle) * d * 0.8;
+                        this.size = map(d, 0, radius, 4, 1);
+                    } else {
+                        // Gentle Attraction (Deform)
+                        targetX = this.baseX + cos(angle) * force;
+                        targetY = this.baseY + sin(angle) * force;
+                        this.size = map(d, 0, radius, 4, 2);
+                    }
+                } else {
+                    this.size = 2;
+                }
+
+                // 3. Easing (MEMORY TRACE IMPLEMENTATION)
+                // If active (being manipulated), respond fast (0.1).
+                // If inactive (recovering), heal slowly (0.02) to leave a trace.
+                let recoverySpeed = this.active ? 0.1 : 0.02;
+
+                this.x = lerp(this.x, targetX, recoverySpeed);
+                this.y = lerp(this.y, targetY, recoverySpeed);
+            }
+        }
+
+        function windowResized() {
+            resizeCanvas(windowWidth, windowHeight);
+            initGrid();
+        }
+    </script>
+</body>
+
+</html>

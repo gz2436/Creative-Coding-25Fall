@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Distance</title>
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.6.0/p5.js"></script>
+
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background: #fff;
+            font-family: 'Inter', sans-serif;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+
+        body.loaded {
+            opacity: 1;
+        }
+
+        /* OVERLAY PREMIUM STYLES */
+        #overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100vh;
+            background: #fff;
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            transition: opacity 0.8s ease;
+        }
+
+        #overlay h1 {
+            font-weight: 300;
+            font-size: 1.2rem;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            margin-bottom: 0.8rem;
+            color: #111;
+        }
+
+        #overlay p {
+            color: #999;
+            font-size: 0.75rem;
+            letter-spacing: 0.1em;
+            line-height: 1.6;
+            margin-bottom: 3rem;
+            text-transform: uppercase;
+            max-width: 450px;
+            text-align: center;
+        }
+
+        #start-btn {
+            background: transparent;
+            border: none;
+            color: #111;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.7rem;
+            letter-spacing: 0.2em;
+            border-bottom: 1px solid transparent;
+            cursor: pointer;
+            transition: all 0.3s;
+            padding-bottom: 5px;
+            text-transform: uppercase;
+        }
+
+        #start-btn:hover {
+            border-bottom: 1px solid #111;
+            opacity: 0.6;
+        }
+
+        /* INFO OVERLAY */
+        #info {
+            position: absolute;
+            top: 2rem;
+            left: 2rem;
+            pointer-events: none;
+            mix-blend-mode: difference;
+            color: white;
+            z-index: 10;
+        }
+
+        h1 {
+            font-family: 'Inter', sans-serif;
+            font-weight: normal;
+            font-size: 1rem;
+            margin: 0 0 0.5rem 0;
+            letter-spacing: 0.25em;
+            /* Widened to match Threshold length */
+            text-transform: uppercase;
+        }
+
+        p {
+            margin: 0;
+            font-size: 0.8rem;
+            opacity: 0.8;
+        }
+
+        #control-hint {
+            position: absolute;
+            bottom: 2rem;
+            width: 100%;
+            text-align: center;
+            font-size: 0.8rem;
+            color: #999;
+            pointer-events: none;
+            opacity: 0;
+            animation: fadeIn 2s 1s forwards;
+            font-family: 'Inter', sans-serif;
+        }
+
+        @keyframes fadeIn {
+            to {
+                opacity: 1;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- OVERLAY -->
+    <div id="overlay">
+        <h1>Distance</h1>
+        <p>This study explores the elasticity of personal space. A structured grid represents social order, which
+            distorts and realigns in the presence of an observer. The interaction mirrors how intimacy defies rigid
+            structures.</p>
+        <button id="start-btn">ENTER</button>
+    </div>
+
+    <!-- INFO (Hidden behind overlay initially) -->
+    <div id="info">
+        <h1>Distance</h1>
+        <p>Proximity alters perception.</p>
+    </div>
+
+    <div id="control-hint">move cursor to disturb the field</div>
+
+    <script>
+        let nodes = [];
+        let cols, rows;
+        let spacing = 30; // Density of the grid
+
+        function setup() {
+            createCanvas(windowWidth, windowHeight);
+            initGrid();
+        }
+
+        // Wait for fonts to load to prevent layout jump
+        window.addEventListener('load', () => {
+            document.fonts.ready.then(() => {
+                setTimeout(() => {
+                    document.body.classList.add('loaded');
+                }, 100);
+            });
+        });
+
+        document.getElementById('start-btn').addEventListener('click', () => {
+            document.getElementById('overlay').style.opacity = 0;
+            setTimeout(() => document.getElementById('overlay').style.display = 'none', 2000);
+            noCursor(); // NOW we hide cursor
+        });
+
+        function initGrid() {
+            nodes = [];
+            cols = width / spacing;
+            rows = height / spacing;
+
+            for (let i = 0; i < cols; i++) {
+                for (let j = 0; j < rows; j++) {
+                    // Create nodes centered in their grid cells
+                    let x = i * spacing + spacing / 2;
+                    let y = j * spacing + spacing / 2;
+                    nodes.push(new Node(x, y));
+                }
+            }
+        }
+
+        function draw() {
+            background(255); // White minimalist background
+
+            // Draw a subtle custom cursor
+            noFill();
+            stroke(0, 50);
+            ellipse(mouseX, mouseY, 20, 20);
+
+            for (let node of nodes) {
+                node.update();
+                node.display();
+            }
+        }
+
+        function windowResized() {
+            resizeCanvas(windowWidth, windowHeight);
+            initGrid();
+        }
+
+        class Node {
+            constructor(x, y) {
+                this.baseX = x;         // Original position
+                this.baseY = y;
+                this.x = x;             // Current position
+                this.y = y;
+
+                this.size = 2;
+                this.angle = 0;
+
+                // Random offset for organic noise movement
+                this.noiseOffsetX = random(1000);
+                this.noiseOffsetY = random(2000);
+            }
+
+            update() {
+                // 1. Calculate fundamental distance
+                let d = dist(mouseX, mouseY, this.baseX, this.baseY);
+
+                // 2. Define the "Influence Radius"
+                let maxDist = 250;
+
+                // 3. Calculate Interaction Force
+                // If within radius, repel/attract. If outside, return to base.
+                let targetX = this.baseX;
+                let targetY = this.baseY;
+                let targetSize = 2;
+                let targetAngle = 0;
+
+                if (d < maxDist) {
+                    // Interaction Logic:
+                    // The closer the mouse, the stronger the push AND the larger the particle
+
+                    // Angle from mouse to point
+                    let angleToMouse = atan2(this.baseY - mouseY, this.baseX - mouseX);
+
+                    // Push strength (Inverse square law feel)
+                    let push = map(d, 0, maxDist, 80, 0);
+
+                    // Simple repulsion
+                    targetX = this.baseX + cos(angleToMouse) * push;
+                    targetY = this.baseY + sin(angleToMouse) * push;
+
+                    // Size blooms when close
+                    targetSize = map(d, 0, maxDist, 12, 2);
+
+                    // Points orient towards mouse
+                    targetAngle = angleToMouse;
+                }
+
+                // 4. Add Organic Idle Movement (Perlin Noise)
+                // Only applied when not continuously checking exact grid spots
+                let time = millis() * 0.001;
+                let noiseX = map(noise(this.noiseOffsetX + time), 0, 1, -10, 10);
+                let noiseY = map(noise(this.noiseOffsetY + time), 0, 1, -10, 10);
+
+                // Blend targets
+                targetX += noiseX;
+                targetY += noiseY;
+
+                // 5. Physics Easing (The "Fluid" feel)
+                // Instead of jumping to target, we Lerp (Linear Interpolate)
+                // 0.1 is the "viscosity". Lower = sludgier, Higher = snappier.
+                this.x = lerp(this.x, targetX, 0.1);
+                this.y = lerp(this.y, targetY, 0.1);
+                this.size = lerp(this.size, targetSize, 0.1);
+                this.angle = lerp(this.angle, targetAngle, 0.1);
+            }
+
+            display() {
+                push();
+                translate(this.x, this.y);
+                rotate(this.angle);
+
+                // Visual Style:
+                // When small -> Dot
+                // When large -> Line/Arrow pointing away
+
+                fill(0);
+                noStroke();
+
+                if (this.size > 5) {
+                    // Transform into a directional line when active
+                    stroke(0);
+                    strokeWeight(1.5);
+                    line(-this.size / 2, 0, this.size / 2, 0);
+                } else {
+                    // Just a dormant dot
+                    ellipse(0, 0, this.size, this.size);
+                }
+
+                pop();
+            }
+        }
+    </script>
+</body>
+
+</html>

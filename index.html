@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RELATIONSHIPS AS CONDITIONS</title>
+    <!-- Fonts: Inter for that clean museum look -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400&display=swap" rel="stylesheet">
+
+    <style>
+        /* BASE STYLES */
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background: #fff;
+            font-family: 'Inter', sans-serif;
+            color: #111;
+
+            /* PAGE TRANSITION STATE */
+            opacity: 0;
+            transition: opacity 1.0s cubic-bezier(0.25, 1, 0.5, 1);
+            /* Elegant ease */
+        }
+
+        /* Loaded State */
+        body.loaded {
+            opacity: 1;
+        }
+
+        /* TYPOGRAPHY */
+        h1 {
+            font-weight: 300;
+            font-size: 1.2rem;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            margin-bottom: 0.5rem;
+        }
+
+        p {
+            color: #999;
+            font-size: 0.75rem;
+            letter-spacing: 0.1em;
+            margin-bottom: 0;
+            text-transform: uppercase;
+        }
+
+        /* NAVIGATION */
+        nav {
+            margin-top: 0;
+            display: flex;
+            gap: 3rem;
+        }
+
+        nav a {
+            text-decoration: none;
+            color: #111;
+            font-size: 0.75rem;
+            letter-spacing: 0.15em;
+            border-bottom: 1px solid transparent;
+            padding-bottom: 4px;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        nav a:hover {
+            opacity: 0.6;
+        }
+
+        /* Ambient Line (Optional Decoration) */
+        .line {
+            width: 1px;
+            height: 30px;
+            background: #eee;
+            margin-top: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        /* Footer Metadata */
+        .meta {
+            position: absolute;
+            bottom: 2rem;
+            font-size: 0.6rem;
+            color: #ccc;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- CONTENT -->
+    <h1>Relationships as Conditions</h1>
+    <p>A computational study on intimacy and distance.</p>
+
+    <div class="line"></div>
+
+    <nav>
+        <a href="midterm/index.html" class="transition-link">MIDTERM</a>
+        <a href="final/index.html" class="transition-link">FINAL</a>
+    </nav>
+
+    <div class="meta">Creative Coding — 25Fall</div>
+
+    <!-- TRANSITION LOGIC -->
+    <script>
+        // 1. Fade In on Load (With small delay to ensure CSS parses)
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                document.body.classList.add('loaded');
+            }, 50);
+        });
+
+        // 2. Fade Out on Click
+        document.querySelectorAll('.transition-link').forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault(); // Stop immediate jump
+                const target = link.href;
+
+                // Fade out
+                document.body.style.opacity = '0';
+
+                // Wait then go
+                setTimeout(() => {
+                    window.location.href = target;
+                }, 500); // Match CSS transition time
+            });
+        });
+    </script>
+</body>
+
+</html>
