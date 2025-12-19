@@ -1,9 +1,9 @@
 # THE FABRIC
-### A Computational Study on Relational Mechanics.
+### A Computational Study on Relational Mechanics
 
-> "Relationships are not static objects found in the dark; they are active conditions of maintenance."
+> *"Relationships are not static objects found in the dark; they are active conditions of maintenance."*
 
-**[Live Exhibition](https://gz2436.github.io/Creative-Coding-25Fall/)**
+**[ → Live Exhibition](https://gz2436.github.io/Creative-Coding-25Fall/)**
 
 ---
 
@@ -17,43 +17,48 @@
 
 ---
 
-## I. Concept & Ideation
-**Theme:** *Relationships as Conditions*
+## 01 Concept: The Resilience of Relations
 
-This project, titled **"The Fabric"**, is the culmination of a semester-long exploration into visualizing abstract human mechanics. While the Midterm studies (*Distance, Threshold, Presence*) focused on static fields distorted by the mouse, the Final Project seeks to embody the **viscosity and elasticity** of real intimacy.
+**"The Fabric"** is a visualization of human emotional mechanisms.
 
-The central metaphor is a "woven fabric." Relationships are interconnected nodes. When one node moves, it pulls its neighbors. The interaction is designed to be physical and consequential:
-*   **Open Hand (Touch)**: Represents gentle influence. The fabric deforms slightly but maintains its structure.
-*   **Closed Fist (Grip)**: Represents tension, obsession, or control. The fabric is pulled violently towards the center, potentially distorting the grid beyond recognition.
+While the Midterm studies explored physical "distance and boundaries," this Final Project delves into the **viscosity and elasticity** of relationships. I reimagine the interpersonal network as a "woven fabric"—where no node exists in isolation; each is defined by the tension of its neighbors.
 
-## II. Development Process
-The transition from Midterm to Final involved a significant technical leap from standard interaction (Mouse) to physical embodiment (Hand Tracking).
-
-1.  **Midterm Foundation**: I started by refining the particle systems from the midterm studies, ensuring the code structure was modular (Nodes, Grid, Update Loop).
-2.  **Sensor Integration**: I integrated **ml5.js** (HandPose) to replace the mouse cursor. This allows the user to effect change from a distance, mirroring the theme of "action at a distance."
-3.  **Aesthetic Refinement**: A critical part of the process was unifying the visual language—moving away from "tech demo" aesthetics to a "Museum Minimalist" style (Monochrome, Inter font, copious whitespace).
-
-## III. Challenges & Solutions
-
-### 1. The "Memory Trace" (Physics Logic)
-**The Problem**: Initially, the grid felt too "bouncy." As soon as the hand was removed, the particles snapped back to their original positions instantly. This felt robotic and lacked emotional weight.
-**The Solution**: I implemented a variable easing system in the physics engine.
-*   *Active State*: High responsiveness (`lerp 0.1`) when interacting.
-*   *Recovery State*: Extremely low viscosity (`lerp 0.02`) when healing.
-This creates a **"Memory Trace"**—if you disturb the field, the "scar" of that interaction lingers for seconds before fading, symbolizing how relationships hold the memory of past conflicts.
-
-### 2. Layout Stability (The FOUT Issue)
-**The Problem**: On high-res displays, the transition from the loading screen to the art piece would "jump" visibly because the web fonts (`Inter`) hadn't finished loading before the canvas was centered.
-**The Solution**: I constructed a `document.fonts.ready` promise chain. The application now forces a wait state until the typography is pixel-perfectly rendered before removing the overlay, ensuring a seamless, cinema-like entry.
+In this mechanics, interaction becomes metaphor:
+*   **Touch (Open Hand)**: Represents gentle intervention. The fabric breathes with the gesture, its structure fluctuating yet remaining intact.
+*   **Grip (Closed Fist)**: Represents tension and possession. The grid collapses violently toward the center. When this force is excessive, the ordered connections are twisted beyond recognition.
 
 ---
 
-## IV. Technical Stack
-*   **Language**: HTML5, CSS3, Vanilla JavaScript (ES6+)
-*   **Libraries**:
-    *   [p5.js](https://p5js.org/) (Canvas rendering)
-    *   [ml5.js](https://ml5js.org/) (Computer Vision / HandPose)
-*   **Typography**: Inter (Google Fonts)
+## 02 Evolution: From Coordinate to Body
+
+Moving from mouse clicks to hand tracking is not just a technical substitution, but an **elevation of interaction dimension**.
+
+1.  **Embodied Cognition**: By integrating **ml5.js (HandPose)**, the user shifts from an "operator" to a "participant." This process, where movement triggers systemic change, mirrors the real-world sensation that "a slight move in one part may affect the whole situation."
+2.  **Visual Subtraction**: I intentionally stripped away decorative elements, adopting a **"Museum Minimalist"** aesthetic. The expansive whitespace and asymmetrical grid ensure that every vibration of the lines carries weight.
+
+---
+
+## 03 Challenge: Physics with Memory
+
+### The Memory Trace
+
+In early tests, the grid's elasticity was too mechanical—the moment the hand released, everything snapped back instantly. This "zero-memory" physics made the piece feel lifeless.
+
+**The Solution:**
+I rewrote the casing logic of the physics engine to introduce a **non-linear "healing" process**.
+
+*   **Active State**: High Sensitivity. The fabric captures the slightest tremor of the fingers instantly.
+*   **Recovery State**: Extremely low viscosity. When the hand leaves, the grid does not vanish immediately but lingers like a "muscle memory," slowly smoothing out over time.
+
+This **"delayed fading scar"** is my core expression regarding time and emotion.
+
+---
+
+## 04 Technical Stack
+
+*   **Core**: HTML5 Canvas / Vanilla JavaScript (ES6+)
+*   **Interaction**: [p5.js](https://p5js.org/) (Rendering) / [ml5.js](https://ml5js.org/) (Real-time Hand Pose)
+*   **Typography**: Inter Typeface (For precision typesetting)
 
 ---
 *Fall 2025 Creative Coding Final*
