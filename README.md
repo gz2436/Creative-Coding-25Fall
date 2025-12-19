@@ -3,7 +3,7 @@
 
 > *"Relationships are not static objects found in the dark; they are active conditions of maintenance."*
 
-**[ → Live Exhibition](https://gz2436.github.io/Creative-Coding-25Fall/)**
+[![Live Exhibition](https://img.shields.io/badge/LIVE_EXHIBITION-ENTER_NOW-black?style=for-the-badge&logo=github&logoColor=white)](https://gz2436.github.io/Creative-Coding-25Fall/)
 
 ---
 
